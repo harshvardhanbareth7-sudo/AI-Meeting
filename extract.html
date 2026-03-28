@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Extract Tasks – AI Meeting-to-Action</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060d1f;--bg2:#0a1428;--cyan:#00e5ff;--violet:#a855f7;--pink:#e040fb;
+  --card:#0d1a35;--border:rgba(255,255,255,0.09);--font:'Plus Jakarta Sans',sans-serif;
+  --green:#34d399;--yellow:#fbbf24;--red:#f87171;
+}
+html,body{min-height:100%;font-family:var(--font);background:var(--bg);color:#fff;overflow-x:hidden}
+
+/* BG */
+.bg-scene{position:fixed;inset:0;z-index:0;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.22}
+.orb1{width:600px;height:600px;background:radial-gradient(#3b0764,transparent 70%);top:-200px;left:-100px;animation:o1 20s ease-in-out infinite}
+.orb2{width:500px;height:500px;background:radial-gradient(#0e4a6e,transparent 70%);bottom:-150px;right:-80px;animation:o2 24s ease-in-out infinite}
+@keyframes o1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+@keyframes o2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,-30px)}}
+
+/* LAYOUT */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;height:56px;border-bottom:1px solid var(--border);
+  background:rgba(6,13,31,.88);backdrop-filter:blur(14px)}
+.nav-back{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;font-weight:700}
+.back-arrow{color:var(--cyan);font-size:18px;transition:transform .2s}
+.nav-back:hover .back-arrow{transform:translateX(-3px)}
+.page-title{font-size:20px;font-weight:800;letter-spacing:-.02em}
+
+.container{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:32px 24px}
+
+.section-card{background:rgba(13,26,53,.8);border:1px solid var(--border);border-radius:18px;
+  padding:24px;backdrop-filter:blur(10px);margin-bottom:20px}
+.label{font-size:11px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px}
+
+input[type=text],textarea{width:100%;padding:12px 15px;border-radius:12px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#fff;font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s;resize:vertical}
+input[type=text]:focus,textarea:focus{border-color:rgba(0,229,255,.45)}
+input[type=text]::placeholder,textarea::placeholder{color:rgba(255,255,255,.2)}
+
+.btn-extract{width:100%;padding:14px;border-radius:13px;border:none;
+  background:linear-gradient(135deg,var(--cyan),var(--violet));
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
+  transition:transform .15s,box-shadow .2s;box-shadow:0 0 30px rgba(0,229,255,.2)}
+.btn-extract:hover:not(:disabled){transform:scale(1.02);box-shadow:0 0 50px rgba(0,229,255,.35)}
+.btn-extract:disabled{opacity:.5;cursor:not-allowed}
+
+/* Results */
+.results{display:none}
+.results.show{display:block}
+
+.summary-box{background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.2);
+  border-radius:14px;padding:18px;margin-bottom:20px;font-size:14px;line-height:1.7;color:rgba(255,255,255,.85)}
+.summary-label{font-size:11px;font-weight:700;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+
+.tasks-grid{display:flex;flex-direction:column;gap:10px}
+.task-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:13px;padding:16px;display:flex;align-items:flex-start;gap:12px;
+  transition:border-color .2s}
+.task-card:hover{border-color:rgba(0,229,255,.2)}
+.task-card.high{border-left:3px solid var(--red)}
+.task-card.medium{border-left:3px solid var(--yellow)}
+.task-card.low{border-left:3px solid var(--green)}
+.task-check{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,.2);flex-shrink:0;margin-top:2px;cursor:pointer}
+.task-body{flex:1}
+.task-title{font-size:14px;font-weight:700;color:#fff;margin-bottom:4px}
+.task-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5;margin-bottom:8px}
+.task-meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta-tag{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.tag-assignee{background:rgba(168,85,247,.15);color:var(--violet);border:1px solid rgba(168,85,247,.25)}
+.tag-deadline{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.tag-priority.high{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+.tag-priority.medium{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2)}
+.tag-priority.low{background:rgba(52,211,153,.1);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+
+.decisions-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.decisions-list li{font-size:13px;color:rgba(255,255,255,.75);padding:8px 12px;
+  background:rgba(255,255,255,.03);border-radius:9px;border-left:2px solid var(--violet);display:flex;gap:8px}
+
+.loading-state{text-align:center;padding:40px 20px}
+.loading-spinner{width:40px;height:40px;border-radius:50%;border:3px solid rgba(0,229,255,.15);
+  border-top-color:var(--cyan);animation:spin .8s linear infinite;margin:0 auto 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:rgba(255,255,255,.5)}
+
+.done-banner{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.25);
+  border-radius:13px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.done-icon{font-size:24px}
+.done-msg{font-size:13px;color:rgba(52,211,153,.9);font-weight:600}
+.btn-go-dash{margin-left:auto;padding:8px 18px;border-radius:30px;border:1px solid rgba(52,211,153,.35);
+  background:rgba(52,211,153,.1);color:var(--green);font-size:12px;font-weight:700;cursor:pointer;
+  font-family:var(--font);text-decoration:none;transition:all .2s}
+.btn-go-dash:hover{background:rgba(52,211,153,.2)}
+
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:14px;text-align:center}
+.stat-num{font-size:28px;font-weight:800;background:linear-gradient(135deg,var(--cyan),var(--violet));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-lbl{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="bg-scene"><div class="orb orb1"></div><div class="orb orb2"></div></div>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:14px">
+    <a href="home.html" class="nav-back"><span class="back-arrow">←</span></a>
+    <div class="page-title">Extract Action Items</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="section-card">
+    <div class="label">Meeting Title</div>
+    <input type="text" id="meetTitle" placeholder="e.g. Q3 Sprint Planning" style="margin-bottom:18px"/>
+
+    <div class="label">Meeting Notes / Transcript</div>
+    <textarea id="transcriptInput" rows="10"
+      placeholder="Paste your meeting notes, transcript, or type a summary here...
+
+Example:
+Alice will prepare the budget slides by Friday.
+Bob needs to fix the login bug — it's high priority, due tomorrow.
+We agreed to launch the beta in September. Carol will handle marketing announcements."></textarea>
+
+    <button class="btn-extract" id="extractBtn" onclick="runExtraction()" style="margin-top:16px">
+      ✦ Extract Tasks with AI
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingState" class="section-card loading-state" style="display:none">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Claude AI is analyzing your meeting…</div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="results">
+
+    <div class="done-banner">
+      <span class="done-icon">✅</span>
+      <span class="done-msg">Tasks extracted and saved to your dashboard!</span>
+      <a href="home.html" class="btn-go-dash">Go to Dashboard →</a>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num" id="statTasks">0</div><div class="stat-lbl">Tasks</div></div>
+      <div class="stat-box"><div class="stat-num" id="statStakeholders">0</div><div class="stat-lbl">Stakeholders</div></div>
+      <div class="stat-box"><div class="stat-num" id="statDecisions">0</div><div class="stat-lbl">Decisions</div></div>
+    </div>
+
+    <div class="section-card">
+      <div class="summary-label">📋 AI Summary</div>
+      <div class="summary-box" id="summaryBox"></div>
+    </div>
+
+    <div class="section-card" id="decisionsCard" style="display:none">
+      <div class="label" style="margin-bottom:12px">Key Decisions</div>
+      <ul class="decisions-list" id="decisionsList"></ul>
+    </div>
+
+    <div class="section-card">
+      <div class="label" style="margin-bottom:14px">Action Items</div>
+      <div class="tasks-grid" id="tasksList"></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="../assets/js/api.js"></script>
+<script>
+async function runExtraction() {
+  const title      = document.getElementById('meetTitle').value.trim();
+  const transcript = document.getElementById('transcriptInput').value.trim();
+
+  if (transcript.length < 20) {
+    alert('Please enter at least 20 characters of meeting notes.');
+    return;
+  }
+
+  document.getElementById('extractBtn').disabled = true;
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('results').classList.remove('show');
+
+  try {
+    const data = await API.ai.extract({ title: title || 'Meeting', transcript, source: 'text' });
+
+    document.getElementById('loadingState').style.display = 'none';
+    document.getElementById('results').classList.add('show');
+
+    const { meeting, tasks, aiResult } = data;
+
+    // Stats
+    document.getElementById('statTasks').textContent        = tasks.length;
+    document.getElementById('statStakeholders').textContent = (aiResult.stakeholders || []).length;
+    document.getElementById('statDecisions').textContent    = (aiResult.keyDecisions || []).length;
+
+    // Summary
+    document.getElementById('summaryBox').textContent = aiResult.summary;
+
+    // Decisions
+    const decisions = aiResult.keyDecisions || [];
+    if (decisions.length) {
+      document.getElementById('decisionsCard').style.display = 'block';
+      document.getElementById('decisionsList').innerHTML = decisions
+        .map(d => `<li><span style="color:var(--violet)">→</span>${d}</li>`).join('');
+    }
+
+    // Tasks
+    document.getElementById('tasksList').innerHTML = tasks.map(t => `
+      <div class="task-card ${t.priority}">
+        <div class="task-check"></div>
+        <div class="task-body">
+          <div class="task-title">${escHtml(t.title)}</div>
+          ${t.description ? `<div class="task-desc">${escHtml(t.description)}</div>` : ''}
+          <div class="task-meta">
+            <span class="meta-tag tag-assignee">👤 ${escHtml(t.assignee)}</span>
+            ${t.deadline ? `<span class="meta-tag tag-deadline">📅 ${t.deadline}</span>` : ''}
+            <span class="meta-tag tag-priority ${t.priority}">${t.priority.toUpperCase()}</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    document.getElementById('loadingState').style.display = 'none';
+    alert('Error: ' + err.message);
+  } finally {
+    document.getElementById('extractBtn').disabled = false;
+  }
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

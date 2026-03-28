@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Meeting-to-Action – Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#060d1f;--bg2:#0a1428;--cyan:#00e5ff;--violet:#a855f7;--pink:#e040fb;
+  --card:#0d1a35;--border:rgba(255,255,255,0.09);--font:'Plus Jakarta Sans',sans-serif;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:#fff}
+
+/* ── BACKGROUND ── */
+.bg-scene{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.25}
+.orb1{width:600px;height:600px;background:radial-gradient(#3b0764,transparent 70%);top:-200px;left:-100px;animation:o1 20s ease-in-out infinite}
+.orb2{width:500px;height:500px;background:radial-gradient(#0e4a6e,transparent 70%);bottom:-150px;right:-80px;animation:o2 24s ease-in-out infinite}
+.grid-floor{position:absolute;bottom:0;left:0;right:0;height:300px;
+  background-image:linear-gradient(rgba(0,229,255,.13) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.13) 1px,transparent 1px);
+  background-size:55px 55px;transform:perspective(500px) rotateX(50deg);transform-origin:bottom center;
+  mask-image:linear-gradient(to top,rgba(0,229,255,.25),transparent 70%);-webkit-mask-image:linear-gradient(to top,rgba(0,229,255,.25),transparent 70%)}
+.wave-l,.wave-r{position:absolute;bottom:40px;width:200px;height:160px;
+  background:linear-gradient(135deg,rgba(0,188,212,.3),rgba(168,85,247,.2));
+  border-radius:50% 50% 0 0/60% 60% 0 0;filter:blur(28px);animation:wp 7s ease-in-out infinite}
+.wave-l{left:-50px}.wave-r{right:-50px;animation-delay:-3.5s}
+@keyframes o1{0%,100%{transform:translate(0,0)}50%{transform:translate(40px,30px)}}
+@keyframes o2{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,-30px)}}
+@keyframes wp{0%,100%{opacity:.5}50%{opacity:1}}
+
+body.light {
+  --bg: #f0f4ff;
+  --bg2: #e4eaf5;
+  --card: #ffffff;
+  --border: rgba(0,0,0,0.1);
+}
+body.light .bg-scene { filter: invert(1) hue-rotate(180deg); opacity: 0.15; }
+body.light .topbar   { background: rgba(240,244,255,0.92); border-color: rgba(0,0,0,0.08); }
+body.light .sidebar  { background: rgba(230,236,250,0.9); border-color: rgba(0,0,0,0.08); }
+body.light .right-panel { background: rgba(230,236,250,0.7); border-color: rgba(0,0,0,0.08); }
+body.light .page-title  { color: #1a1a2e; }
+body.light .nav-item    { color: rgba(0,0,0,0.5); }
+body.light .nav-item:hover   { background: rgba(0,0,0,0.06); color: #1a1a2e; }
+body.light .nav-item.active  { color: #0891b2; background: rgba(8,145,178,0.1); border-color: rgba(8,145,178,0.3); }
+body.light .popup        { background: #ffffff; border-color: rgba(8,145,178,0.25); }
+body.light .popup h3     { color: #0891b2; }
+body.light .popup-row .pl { color: rgba(0,0,0,0.45); }
+body.light .popup-row .pv { color: #1a1a2e; }
+body.light .popup-section { color: rgba(0,0,0,0.3); }
+body.light .popup-close   { color: rgba(0,0,0,0.3); }
+body.light .popup-close:hover { color: #1a1a2e; }
+body.light .notif-widget { background: #fff; border-color: rgba(0,0,0,0.08); }
+body.light .notif-widget-title { color: rgba(0,0,0,0.35); }
+body.light .notif-row    { color: rgba(0,0,0,0.65); border-color: rgba(0,0,0,0.06); }
+body.light .ai-panel     { background: #fff; border-color: rgba(8,145,178,0.3); }
+body.light .ai-panel-title { color: #0891b2; }
+body.light .ai-panel-sub   { color: rgba(0,0,0,0.35); }
+body.light .ai-msg         { background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.7); border-left-color: #a855f7; }
+body.light .ai-msg.user-msg { background: rgba(8,145,178,0.06); border-left-color: #0891b2; }
+body.light .ai-input-area  { background: rgba(230,236,250,0.9); border-color: rgba(0,0,0,0.1); }
+body.light .ai-input-label { color: rgba(0,0,0,0.4); }
+body.light .ai-input-row input { background: #fff; border-color: rgba(0,0,0,0.12); color: #1a1a2e; }
+body.light .center .dash-label { color: rgba(0,0,0,0.4); }
+body.light .notif-dropdown { background: #fff; border-color: rgba(8,145,178,0.2); }
+body.light .nd-item        { color: rgba(0,0,0,0.7); border-color: rgba(0,0,0,0.06); }
+body.light .meet-overlay-box { background: #eef2ff; border-color: rgba(8,145,178,0.4); }
+body.light .meet-header    { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); }
+body.light .meet-body      { background: linear-gradient(135deg,#e8eeff,#dde6f8); }
+body.light .meet-participant { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.1); color: rgba(0,0,0,0.5); }
+body.light .todo-item      { background: rgba(0,0,0,0.03); }
+body.light .ti-text        { color: rgba(0,0,0,0.7); }
+body.light .ti-text.done   { color: rgba(0,0,0,0.3); }
+body.light .todo-add-row input { background: #fff; border-color: rgba(0,0,0,0.12); color: #1a1a2e; }
+body.light .notes-list .note-item { background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.7); }
+body.light .notes-add textarea { background: #fff; border-color: rgba(0,0,0,0.12); color: #1a1a2e; }
+body.light .audio-item     { background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.7); }
+body.light .upload-area    { border-color: rgba(8,145,178,0.3); }
+body.light .upload-area:hover { background: rgba(8,145,178,0.06); }
+body.light .upload-area p  { color: rgba(0,0,0,0.4); }
+body.light .saved-item     { background: rgba(0,0,0,0.03); color: rgba(0,0,0,0.7); }
+body.light .notice-item    { color: rgba(0,0,0,0.7); }
+body.light .setting-row    { color: rgba(0,0,0,0.65); border-color: rgba(0,0,0,0.07); }
+body.light .wb { background: linear-gradient(180deg,#0891b2,#a855f7); }
+body.light .grid-floor {
+  background-image:
+    linear-gradient(rgba(8,145,178,0.15) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(8,145,178,0.15) 1px, transparent 1px);
+}
+
+.meet-input-popup {
+  position: fixed; inset: 0; z-index: 900;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+}
+.meet-input-popup.open { display: flex; }
+.meet-input-box {
+  background: linear-gradient(145deg,#0d1a35,#0a1428);
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 20px; padding: 28px;
+  width: 100%; max-width: 400px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+  animation: popIn .25s cubic-bezier(.16,1,.3,1);
+  font-family: var(--font); color: #fff; position: relative;
+}
+.meet-input-box h3 { font-size: 16px; font-weight: 800; margin-bottom: 6px; }
+.meet-input-box p  { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom:18px; }
+.meet-input-box label { font-size:11px; font-weight:700; color:rgba(255,255,255,0.4); letter-spacing:.06em; display:block; margin-bottom:6px; }
+.meet-input-box input {
+  width:100%; padding:11px 14px; border-radius:11px;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+  color:#fff; font-size:14px; font-family:var(--font); outline:none;
+  transition:border-color .2s; margin-bottom:16px;
+}
+.meet-input-box input:focus { border-color:rgba(0,229,255,0.45); }
+.meet-input-box input::placeholder { color:rgba(255,255,255,0.2); }
+.mip-btns { display:flex; gap:10px; }
+.mip-cancel {
+  flex:1; padding:11px; border-radius:11px; border:1.5px solid rgba(255,255,255,0.15);
+  background:transparent; color:rgba(255,255,255,0.5); font-size:14px;
+  font-weight:600; cursor:pointer; font-family:var(--font); transition:all .2s;
+}
+.mip-cancel:hover { border-color:rgba(255,255,255,0.3); color:#fff; }
+.mip-confirm {
+  flex:2; padding:11px; border-radius:11px; border:none;
+  font-size:14px; font-weight:800; cursor:pointer;
+  font-family:var(--font); color:#fff; transition:transform .15s, box-shadow .2s;
+}
+.mip-confirm:hover { transform:scale(1.02); }
+.mip-err { font-size:12px; color:#f87171; margin-bottom:10px; display:none;
+  background:rgba(248,113,113,0.1); border:1px solid rgba(248,113,113,0.2);
+  border-radius:8px; padding:7px 10px; }
+
+/* generated code display */
+.meet-code-display {
+  background:rgba(0,229,255,0.06); border:1px solid rgba(0,229,255,0.2);
+  border-radius:10px; padding:10px 14px; font-size:13px; color:var(--cyan);
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;
+}
+.meet-code-copy {
+  font-size:11px; background:rgba(0,229,255,0.15); border:none; color:var(--cyan);
+  padding:4px 10px; border-radius:20px; cursor:pointer; font-family:var(--font);
+}
+
+/* ── LAYOUT ── */
+.shell{position:relative;z-index:1;display:grid;grid-template-rows:56px 1fr;height:100vh}
+
+/* ── TOP BAR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  border-bottom:1px solid var(--border);background:rgba(6,13,31,.8);backdrop-filter:blur(14px)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.avatar{width:42px;height:42px;border-radius:50%;overflow:hidden;border:2px solid var(--cyan);cursor:pointer;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-fallback{width:100%;height:100%;background:linear-gradient(135deg,#7c3aed,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+.page-title{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.notif-btn{background:none;border:none;cursor:pointer;position:relative;padding:6px;color:var(--cyan)}
+.notif-btn svg{width:24px;height:24px}
+.notif-dot{position:absolute;top:5px;right:5px;width:8px;height:8px;border-radius:50%;background:#f87171;border:2px solid var(--bg)}
+
+/* ── BODY GRID ── */
+.body{display:grid;grid-template-columns:190px 1fr 280px;height:100%;overflow:hidden}
+
+/* ── LEFT SIDEBAR ── */
+.sidebar{background:rgba(10,20,40,.7);border-right:1px solid var(--border);padding:14px 10px;display:flex;flex-direction:column;gap:4px;backdrop-filter:blur(12px)}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);transition:all .2s;border:1px solid transparent;white-space:nowrap}
+.nav-item:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-item.active{color:var(--cyan);background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.25)}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+
+/* ── CENTER ── */
+.center{display:flex;flex-direction:column;padding:20px;gap:16px;overflow:hidden;position:relative}
+.dash-label{font-size:13px;color:rgba(255,255,255,.35);font-weight:500;text-align:center;margin-top:16px}
+.meet-btns{display:flex;gap:16px;justify-content:center;margin-top:8px}
+.meet-btn{display:flex;align-items:center;gap:10px;padding:14px 32px;border-radius:40px;font-size:15px;font-weight:700;cursor:pointer;border:2px solid;transition:all .25s}
+.btn-join{background:linear-gradient(90deg,rgba(0,229,255,.15),rgba(0,229,255,.05));border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 20px rgba(0,229,255,.2)}
+.btn-join:hover{background:linear-gradient(90deg,rgba(0,229,255,.3),rgba(0,229,255,.1));box-shadow:0 0 40px rgba(0,229,255,.4)}
+.btn-create{background:linear-gradient(90deg,rgba(168,85,247,.15),rgba(168,85,247,.05));border-color:var(--violet);color:var(--violet);box-shadow:0 0 20px rgba(168,85,247,.2)}
+.btn-create:hover{background:linear-gradient(90deg,rgba(168,85,247,.3),rgba(168,85,247,.1));box-shadow:0 0 40px rgba(168,85,247,.4)}
+.meet-btn svg{width:20px;height:20px}
+
+/* waveform center */
+.waveform-center{display:flex;align-items:center;gap:3px;justify-content:center;height:44px;margin-top:4px}
+.wb{width:3px;border-radius:2px;background:linear-gradient(180deg,var(--cyan),var(--violet));animation:wb 1.1s ease-in-out infinite alternate}
+@keyframes wb{from{transform:scaleY(.2);opacity:.3}to{transform:scaleY(1);opacity:1}}
+
+#editProfilePopup {
+  position: fixed; inset: 0; z-index: 800;
+  display: none; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+}
+#editProfilePopup.open { display: flex; }
+
+.ep-box {
+  background: linear-gradient(145deg,#0d1a35,#0a1428);
+  border: 1px solid rgba(0,229,255,0.25); border-radius: 20px;
+  padding: 28px; width: 100%; max-width: 360px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.7);
+  animation: popIn .25s cubic-bezier(.16,1,.3,1);
+  font-family: var(--font); color: #fff; position: relative;
+}
+.ep-box h3 { font-size: 16px; font-weight: 800; color: var(--cyan); margin-bottom: 20px; }
+
+/* avatar editor */
+.ep-avatar-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px;
+}
+.ep-avatar-preview {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid var(--cyan); overflow: hidden; cursor: pointer;
+  position: relative; flex-shrink: 0;
+}
+.ep-avatar-preview img { width:100%;height:100%;object-fit:cover;display:block; }
+.ep-avatar-fallback {
+  width:100%;height:100%;background:linear-gradient(135deg,#7c3aed,#06b6d4);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;
+}
+.ep-avatar-overlay {
+  position:absolute;inset:0;background:rgba(0,0,0,0.5);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .2s;font-size:10px;color:#fff;font-weight:700;text-align:center;
+}
+.ep-avatar-preview:hover .ep-avatar-overlay { opacity:1; }
+.ep-avatar-preview input[type=file] { display:none; }
+.ep-avatar-hint { font-size:11px; color:rgba(255,255,255,0.35); }
+
+/* fields */
+.ep-field { margin-bottom: 14px; }
+.ep-field label { font-size:11px;font-weight:700;color:rgba(255,255,255,0.4);letter-spacing:.06em;display:block;margin-bottom:5px; }
+.ep-field input {
+  width:100%;padding:10px 12px;border-radius:10px;
+  background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+  color:#fff;font-size:13px;font-family:var(--font);outline:none;transition:border-color .2s;
+}
+.ep-field input:focus { border-color:rgba(0,229,255,0.45); }
+.ep-field input::placeholder { color:rgba(255,255,255,0.2); }
+
+.ep-btns { display:flex;gap:10px;margin-top:6px; }
+.ep-cancel {
+  flex:1;padding:10px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.15);
+  background:transparent;color:rgba(255,255,255,0.5);font-size:13px;font-weight:600;
+  cursor:pointer;font-family:var(--font);transition:all .2s;
+}
+.ep-cancel:hover { border-color:rgba(255,255,255,0.3);color:#fff; }
+.ep-save {
+  flex:2;padding:10px;border-radius:10px;border:none;
+  background:linear-gradient(90deg,var(--cyan),var(--violet));
+  color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font);
+  transition:transform .15s,box-shadow .2s;
+}
+.ep-save:hover { transform:scale(1.02);box-shadow:0 0 20px rgba(0,229,255,0.35); }
+
+/* AI input */
+.ai-input-area{margin-top:auto;background:rgba(10,20,40,.8);border:1px solid var(--border);border-radius:16px;padding:14px 16px}
+.ai-input-label{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.ai-input-row{display:flex;gap:10px}
+.ai-input-row input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 14px;color:#fff;font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s}
+.ai-input-row input:focus{border-color:rgba(0,229,255,.4)}
+.ai-input-row input::placeholder{color:rgba(255,255,255,.2)}
+.send-btn{padding:10px 20px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--cyan),var(--violet));color:#fff;font-weight:700;font-size:14px;cursor:pointer;transition:transform .15s,box-shadow .2s;white-space:nowrap}
+.send-btn:hover{transform:scale(1.04);box-shadow:0 0 20px rgba(0,229,255,.4)}
+
+/* ── RIGHT PANEL ── */
+.right-panel{display:flex;flex-direction:column;gap:10px;padding:14px 14px;border-left:1px solid var(--border);background:rgba(10,20,40,.5);backdrop-filter:blur(12px);overflow:hidden}
+
+/* notifications widget */
+.notif-widget{background:rgba(13,26,53,.7);border:1px solid var(--border);border-radius:14px;padding:12px 14px}
+.notif-widget-title{font-size:11px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.notif-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.05);color:rgba(255,255,255,.7)}
+.notif-row:last-child{border-bottom:none}
+.notif-row svg{width:13px;height:13px;flex-shrink:0}
+.notif-row .nr-time{margin-left:auto;color:rgba(255,255,255,.3);font-size:11px;white-space:nowrap}
+
+/* AI suggestions */
+.ai-panel{flex:1;background:rgba(13,26,53,.7);border:2px solid rgba(0,229,255,.25);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 20px rgba(0,229,255,.08)}
+.ai-panel-title{font-size:11px;font-weight:800;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px}
+.ai-panel-sub{font-size:10px;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:8px}
+.ai-msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.ai-msgs::-webkit-scrollbar{width:3px}
+.ai-msgs::-webkit-scrollbar-thumb{background:rgba(0,229,255,.3);border-radius:4px}
+.ai-msg{background:rgba(255,255,255,.04);border-left:2px solid var(--violet);border-radius:0 8px 8px 0;padding:8px 10px;font-size:12px;color:rgba(255,255,255,.75);line-height:1.5}
+.ai-msg.user-msg{border-left-color:var(--cyan);background:rgba(0,229,255,.05)}
+.ai-msg .msg-name{font-size:10px;font-weight:700;color:var(--cyan);margin-bottom:3px}
+.ai-msg.user-msg .msg-name{color:var(--cyan)}
+.ai-msg .msg-name.ai-name{color:var(--violet)}
+.typing-indicator{display:flex;align-items:center;gap:4px;padding:6px 10px}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--violet);animation:tdot 1.2s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes tdot{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+
+/* ── POPUPS ── */
+.popup-overlay{position:fixed;inset:0;z-index:500;display:none;align-items:flex-start;justify-content:flex-start}
+.popup-overlay.center-overlay{align-items:center;justify-content:center;background:rgba(0,0,0,.6);backdrop-filter:blur(5px)}
+.popup-overlay.open{display:flex}
+.popup{background:linear-gradient(145deg,#0d1a35,#0a1428);border:1px solid rgba(0,229,255,.25);border-radius:18px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.7),0 0 0 1px rgba(0,229,255,.08);animation:popIn .25s cubic-bezier(.16,1,.3,1);min-width:260px;max-width:340px;position:relative}
+@keyframes popIn{from{opacity:0;transform:scale(.93) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.popup-close{position:absolute;top:12px;right:14px;background:none;border:none;color:rgba(255,255,255,.3);font-size:18px;cursor:pointer;line-height:1}
+.popup-close:hover{color:#fff}
+.popup h3{font-size:14px;font-weight:800;color:var(--cyan);margin-bottom:12px;letter-spacing:-.01em}
+.popup-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.popup-row:last-child{border-bottom:none}
+.popup-row .pl{color:rgba(255,255,255,.45);font-size:12px}
+.popup-row .pv{font-weight:700;color:#fff}
+.popup-row .pv.cyan{color:var(--cyan)}
+.popup-row .pv.violet{color:var(--violet)}
+.popup-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);text-transform:uppercase;letter-spacing:.1em;margin:10px 0 4px}
+.popup-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);border-radius:20px;padding:3px 10px;font-size:11px;color:rgba(255,255,255,.6);margin:2px}
+
+/* Dashboard popup positioning */
+#dashPopup{position:fixed;top:56px;left:190px;z-index:600;display:none;animation:popIn .25s cubic-bezier(.16,1,.3,1)}
+#dashPopup.open{display:block}
+
+/* Sidebar popups */
+.sidebar-popup{position:fixed;left:190px;top:56px;z-index:600;display:none;animation:popIn .25s cubic-bezier(.16,1,.3,1)}
+.sidebar-popup.open{display:block}
+
+/* Notification dropdown */
+#notifDropdown{position:fixed;top:56px;right:14px;z-index:700;display:none;animation:popIn .25s cubic-bezier(.16,1,.3,1)}
+#notifDropdown.open{display:block}
+.notif-dropdown{background:linear-gradient(145deg,#0d1a35,#0a1428);border:1px solid rgba(0,229,255,.2);border-radius:16px;padding:14px;width:300px;box-shadow:0 20px 60px rgba(0,0,0,.7)}
+.nd-title{font-size:12px;font-weight:800;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.nd-item{display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;color:rgba(255,255,255,.7)}
+.nd-item:last-child{border-bottom:none}
+.nd-item svg{width:14px;height:14px;flex-shrink:0;margin-top:1px}
+.nd-item .nd-time{color:rgba(255,255,255,.3);font-size:10px;white-space:nowrap;margin-left:auto}
+
+/* Google Meet overlay */
+#meetOverlay{position:fixed;inset:0;z-index:800;display:none;background:rgba(0,0,0,.9);align-items:center;justify-content:center}
+#meetOverlay.open{display:flex}
+.meet-overlay-box{background:#1a1a2e;border:2px solid rgba(0,229,255,.3);border-radius:20px;width:90vw;max-width:860px;height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,229,255,.2)}
+.meet-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:rgba(0,0,0,.4);border-bottom:1px solid rgba(255,255,255,.1)}
+.meet-header-left{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:700;color:var(--cyan)}
+.meet-header-left svg{width:20px;height:20px}
+.meet-close-btn{background:rgba(255,255,255,.1);border:none;color:#fff;font-size:13px;font-weight:600;padding:7px 16px;border-radius:20px;cursor:pointer;transition:background .2s}
+.meet-close-btn:hover{background:rgba(255,255,255,.2)}
+.meet-body{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0f1e,#0d1a35)}
+.meet-mock{text-align:center}
+.meet-avatar-grid{display:grid;grid-template-columns:repeat(2,140px);gap:12px;margin:0 auto 20px;justify-content:center}
+.meet-participant{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:12px;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:11px;color:rgba(255,255,255,.5)}
+.meet-participant .p-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.meet-controls{display:flex;gap:14px;justify-content:center;margin-top:16px}
+.mc-btn{width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.mc-btn svg{width:20px;height:20px}
+.mc-btn.red{background:#ef4444;color:#fff}.mc-btn.red:hover{background:#dc2626}
+.mc-btn.gray{background:rgba(255,255,255,.12);color:#fff}.mc-btn.gray:hover{background:rgba(255,255,255,.2)}
+.meet-link-row{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;margin-top:10px;font-size:12px;color:var(--cyan)}
+
+/* To-do popup */
+.todo-list{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto}
+.todo-list::-webkit-scrollbar{width:3px}
+.todo-list::-webkit-scrollbar-thumb{background:rgba(0,229,255,.3);border-radius:4px}
+.todo-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:12px}
+.todo-item input[type=checkbox]{accent-color:var(--cyan);width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.todo-item .ti-text{flex:1;color:rgba(255,255,255,.7)}
+.todo-item .ti-text.done{text-decoration:line-through;color:rgba(255,255,255,.3)}
+.todo-add-row{display:flex;gap:6px;margin-top:8px}
+.todo-add-row input{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:7px 10px;color:#fff;font-size:12px;font-family:var(--font);outline:none}
+.todo-add-row input:focus{border-color:rgba(0,229,255,.4)}
+.todo-add-row button{padding:7px 12px;border-radius:8px;border:none;background:var(--cyan);color:#000;font-weight:700;font-size:12px;cursor:pointer}
+
+/* Audio popup */
+.audio-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:10px}
+.audio-item{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 10px;font-size:12px;color:rgba(255,255,255,.7)}
+.audio-item svg{width:14px;height:14px;color:var(--cyan);flex-shrink:0}
+.upload-area{border:2px dashed rgba(0,229,255,.25);border-radius:10px;padding:16px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s}
+.upload-area:hover{border-color:var(--cyan);background:rgba(0,229,255,.05)}
+.upload-area input{display:none}
+.upload-area p{font-size:12px;color:rgba(255,255,255,.4);margin-top:4px}
+
+/* Notes popup */
+.notes-list{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;margin-bottom:8px}
+.note-item{background:rgba(255,255,255,.04);border-radius:8px;padding:8px 10px;font-size:12px;color:rgba(255,255,255,.65);line-height:1.5;border-left:2px solid var(--violet)}
+.notes-add textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;color:#fff;font-size:12px;font-family:var(--font);outline:none;resize:vertical;min-height:60px}
+.notes-add button{margin-top:6px;padding:7px 14px;border-radius:8px;border:none;background:var(--violet);color:#fff;font-weight:700;font-size:12px;cursor:pointer}
+
+/* Saved popup */
+.saved-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:5px}
+.saved-item svg{width:13px;height:13px;color:var(--pink);flex-shrink:0}
+
+/* Notices */
+.notice-item{padding:8px 10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:8px;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:6px;border-left:3px solid #f87171}
+
+/* Settings */
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:rgba(255,255,255,.65)}
+.setting-row:last-child{border-bottom:none}
+.toggle{width:36px;height:20px;border-radius:10px;background:rgba(255,255,255,.15);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--cyan)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:transform .2s}
+.toggle.on::after{transform:translateX(16px)}
+
+/* Login/Signup in top bar */
+.auth-btns{display:flex;gap:6px}
+.auth-btn{padding:7px 18px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:var(--font);transition:all .2s}
+.btn-login-top{background:transparent;border:1.5px solid rgba(0,229,255,.5);color:var(--cyan)}
+.btn-login-top:hover{background:rgba(0,229,255,.1)}
+.btn-signup-top{background:linear-gradient(90deg,var(--violet),var(--pink));color:#fff}
+.btn-signup-top:hover{filter:brightness(1.15)}
+</style>
+</head>
+<body>
+
+<div id="editProfilePopup">
+  <div class="ep-box">
+    <button onclick="closeEditProfile()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.35);font-size:18px;cursor:pointer;line-height:1">✕</button>
+    <h3>✏️ Edit Profile</h3>
+
+    <div class="ep-avatar-wrap">
+      <label class="ep-avatar-preview" id="epAvatarPreview">
+        <img id="epAvatarImg" src="" style="display:none"/>
+        <div class="ep-avatar-fallback" id="epAvatarFallback">?</div>
+        <div class="ep-avatar-overlay">📷<br/>Change</div>
+        <input type="file" accept="image/*" id="epFileInput" onchange="handleDpChange(event)"/>
+      </label>
+      <div class="ep-avatar-hint">Click avatar to upload photo</div>
+    </div>
+
+    <div class="ep-field">
+      <label>DISPLAY NAME</label>
+      <input type="text" id="epNameInput" placeholder="Your name"/>
+    </div>
+    <div class="ep-field">
+      <label>EMAIL</label>
+      <input type="email" id="epEmailInput" placeholder="you@example.com"/>
+    </div>
+
+    <div class="ep-btns">
+      <button class="ep-cancel" onclick="closeEditProfile()">Cancel</button>
+      <button class="ep-save" onclick="saveProfile()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- BG -->
+<div class="bg-scene">
+  <div class="orb orb1"></div><div class="orb orb2"></div>
+  <div class="grid-floor"></div>
+  <div class="wave-l"></div><div class="wave-r"></div>
+</div>
+
+<div class="shell">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="avatar" onclick="toggleDashPopup()" title="Dashboard">
+        <div class="avatar-fallback">AK</div>
+      </div>
+      <div class="page-title">Dashboard</div>
+    </div>
+    <div class="topbar-right">
+      <div class="auth-btns">
+        <button class="auth-btn btn-login-top" onclick="openAuthModal('login')">Login</button>
+        <button class="auth-btn btn-signup-top" onclick="openAuthModal('signup')">Signup</button>
+      </div>
+      <button class="notif-btn" onclick="toggleNotif()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <div class="notif-dot"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- BODY -->
+
+  <!-- JOIN MEETING POPUP -->
+<div id="joinPopup" class="meet-input-popup">
+  <div class="meet-input-box">
+    <button class="popup-close" onclick="closeJoinPopup()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.35);font-size:18px;cursor:pointer">✕</button>
+    <h3>🎥 Join Meeting</h3>
+    <p>Enter a Google Meet link or meeting code to join.</p>
+    <div id="joinErr" class="mip-err"></div>
+    <label>MEETING LINK OR CODE</label>
+    <input type="text" id="joinLinkInput" placeholder="https://meet.google.com/abc-defg-hij"/>
+    <div class="mip-btns">
+      <button class="mip-cancel" onclick="closeJoinPopup()">Cancel</button>
+      <button class="mip-confirm" onclick="confirmJoin()"
+        style="background:linear-gradient(90deg,#00e5ff,#0891b2);box-shadow:0 0 20px rgba(0,229,255,0.3)">
+        Join Now ↗
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE MEETING POPUP -->
+<div id="createPopup" class="meet-input-popup">
+  <div class="meet-input-box">
+    <button class="popup-close" onclick="closeCreatePopup()" style="position:absolute;top:14px;right:16px;background:none;border:none;color:rgba(255,255,255,.35);font-size:18px;cursor:pointer">✕</button>
+    <h3>✨ Create Meeting</h3>
+    <p>Give your meeting a name and we'll generate a Google Meet link for you.</p>
+    <div id="createErr" class="mip-err"></div>
+    <label>MEETING NAME</label>
+    <input type="text" id="createNameInput" placeholder="e.g. Weekly Team Sync"/>
+    <div id="generatedCodeWrap" style="display:none">
+      <label>YOUR MEETING LINK</label>
+      <div class="meet-code-display">
+        <span id="generatedCode"></span>
+        <button class="meet-code-copy" onclick="copyMeetCode()">Copy</button>
+      </div>
+    </div>
+    <div class="mip-btns">
+      <button class="mip-cancel" onclick="closeCreatePopup()">Cancel</button>
+      <button class="mip-confirm" id="createConfirmBtn" onclick="confirmCreate()"
+        style="background:linear-gradient(90deg,#a855f7,#e040fb);box-shadow:0 0 20px rgba(168,85,247,0.3)">
+        Generate & Open ↗
+      </button>
+    </div>
+  </div>
+</div>
+  <div class="body">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="nav-item active" onclick="openSidebarPopup('meetings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+        Recent Meetings
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('todos',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        To-Do List
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('notes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Notes
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('audio',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        Audio Files
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('saved',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Saved
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('notices',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        Notices
+      </div>
+      <div class="nav-item" onclick="openSidebarPopup('settings',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center" onclick="closeAllPopups(event)">
+      <div class="dash-label">Start your meeting workflow</div>
+      <div class="meet-btns">
+        <button class="meet-btn btn-join" onclick="openMeetOverlay('join')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Join Meeting
+        </button>
+        <button class="meet-btn btn-create" onclick="openMeetOverlay('create')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>
+          Create Meeting
+        </button>
+      </div>
+      <div class="waveform-center" id="waveCenter"></div>
+      <div class="ai-input-area">
+        <div class="ai-input-label">AI Help Input Box</div>
+        <div class="ai-input-row">
+          <input type="text" id="aiInput" placeholder="Ask AI anything..." onkeydown="if(event.key==='Enter')sendAI()"/>
+          <button class="send-btn" onclick="sendAI()">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <!-- Mini notifications -->
+      <div class="notif-widget">
+        <div class="notif-widget-title">Alerts</div>
+        <div class="notif-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#00e5ff" stroke-width="2" style="color:var(--cyan)"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+          Meeting: Product Sync<span class="nr-time">-15m</span>
+        </div>
+        <div class="notif-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Deadline: Action Items<span class="nr-time">-2h</span>
+        </div>
+        <div class="notif-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Meeting: Budget Review<span class="nr-time">-1d</span>
+        </div>
+        <div class="notif-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Urgent task: Finalize Deck<span class="nr-time">now</span>
+        </div>
+      </div>
+
+      <!-- AI SUGGESTIONS -->
+      <div class="ai-panel">
+        <div class="ai-panel-title">AI Suggestions</div>
+        <div class="ai-panel-sub">Smart Insights · Recommendations</div>
+        <div class="ai-msgs" id="aiMsgs">
+          <div class="ai-msg">
+            <div class="msg-name ai-name">✦ AI</div>
+            Review action items from meeting #42
+          </div>
+          <div class="ai-msg">
+            <div class="msg-name ai-name">✦ AI</div>
+            Create new task "Assign design updates to team"
+          </div>
+          <div class="ai-msg">
+            <div class="msg-name ai-name">✦ AI</div>
+            Generate progress report for stakeholders
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     DASHBOARD POPUP (avatar click)
+════════════════════════════════════════════════ -->
+<div id="dashPopup" class="popup">
+  <button class="popup-close" onclick="closeDashPopup()">✕</button>
+  <h3>Dashboard</h3>
+  <div id="dashUserInfo" style="font-size:12px;color:rgba(255,255,255,.4);margin-bottom:10px;display:none">
+    <div style="color:#fff;font-weight:700;font-size:14px" id="dashUserName"></div>
+    <div id="dashUserEmail" style="color:rgba(255,255,255,.4)"></div>
+  </div>
+  <div class="popup-row"><span class="pl">Tasks Completed</span><span class="pv cyan">112</span></div>
+  <div class="popup-row"><span class="pl">Incomplete Tasks</span><span class="pv violet">15</span></div>
+  <div class="popup-row"><span class="pl">Recent Meetings</span><span class="pv">4</span></div>
+  <div class="popup-section">Upcoming Meetings</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.55);padding:2px 0">• Investor Call – Today 3 PM</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.55);padding:2px 0">• Team Standup – Tomorrow 9 AM</div>
+  <div style="font-size:12px;color:rgba(255,255,255,.55);padding:2px 0">• Client Review – Thu 2 PM</div>
+  <div class="popup-section">Past Meetings</div>
+  <div class="popup-row"><span class="pl">Total past meetings</span><span class="pv">88</span></div>
+  <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:4px">• Q2 Review &nbsp;• Design Sprint &nbsp;• Sales Sync</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR POPUPS
+════════════════════════════════════════════════ -->
+
+<!-- Meetings -->
+<div id="pop-meetings" class="sidebar-popup popup" style="top:100px">
+  <button class="popup-close" onclick="closeSidebarPopup('meetings')">✕</button>
+  <h3>📅 Recent Meetings</h3>
+  <div class="popup-row"><span class="pl">Q2 Investor Review</span><span class="pv" style="font-size:11px">Yesterday</span></div>
+  <div class="popup-row"><span class="pl">Design Sprint Planning</span><span class="pv" style="font-size:11px">Mon</span></div>
+  <div class="popup-row"><span class="pl">Product Sync</span><span class="pv" style="font-size:11px">Today</span></div>
+  <div class="popup-row"><span class="pl">Engineering Retro</span><span class="pv" style="font-size:11px">Last Fri</span></div>
+  <div class="popup-section">Upcoming</div>
+  <div style="font-size:12px;color:var(--cyan)">• Investor Call – Today 3 PM</div>
+  <div style="font-size:12px;color:var(--cyan);margin-top:3px">• Team Standup – Tomorrow 9 AM</div>
+</div>
+
+<!-- To-Do -->
+<div id="pop-todos" class="sidebar-popup popup" style="top:140px;width:300px;max-width:300px">
+  <button class="popup-close" onclick="closeSidebarPopup('todos')">✕</button>
+  <h3>✅ To-Do List</h3>
+  <div class="todo-list" id="todoList"></div>
+  <div class="todo-add-row">
+    <input type="text" id="todoInput" placeholder="Add new task…" onkeydown="if(event.key==='Enter')addTodo()"/>
+    <button onclick="addTodo()">Add</button>
+  </div>
+</div>
+
+<!-- Notes -->
+<div id="pop-notes" class="sidebar-popup popup" style="top:180px;width:300px;max-width:300px">
+  <button class="popup-close" onclick="closeSidebarPopup('notes')">✕</button>
+  <h3>📝 Notes</h3>
+  <div class="notes-list" id="notesList"></div>
+  <div class="notes-add">
+    <textarea id="noteInput" placeholder="Write a note…"></textarea>
+    <button onclick="addNote()">Save Note</button>
+  </div>
+</div>
+
+<!-- Audio -->
+<div id="pop-audio" class="sidebar-popup popup" style="top:220px;width:300px;max-width:300px">
+  <button class="popup-close" onclick="closeSidebarPopup('audio')">✕</button>
+  <h3>🎵 Audio Files</h3>
+  <div class="audio-list" id="audioList"></div>
+  <label class="upload-area">
+    <input type="file" accept="audio/*" multiple onchange="handleAudioUpload(event)"/>
+    <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" width="28" height="28"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <p>Click to upload audio from device</p>
+  </label>
+</div>
+
+<!-- Saved -->
+<div id="pop-saved" class="sidebar-popup popup" style="top:260px">
+  <button class="popup-close" onclick="closeSidebarPopup('saved')">✕</button>
+  <h3>🔖 Saved Items</h3>
+  <div class="saved-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Q2 Meeting Summary.pdf</div>
+  <div class="saved-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Product Roadmap Notes</div>
+  <div class="saved-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Design Sprint Transcript</div>
+</div>
+
+<!-- Notices -->
+<div id="pop-notices" class="sidebar-popup popup" style="top:300px">
+  <button class="popup-close" onclick="closeSidebarPopup('notices')">✕</button>
+  <h3>🔔 Notices</h3>
+  <div class="notice-item">⚠️ Deadline tomorrow: Submit Q2 report by 5 PM</div>
+  <div class="notice-item">🔴 Urgent: Client waiting on contract draft</div>
+  <div class="notice-item" style="border-left-color:#f59e0b;background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.2)">📌 Team retro moved to Friday 3 PM</div>
+</div>
+
+<!-- Settings -->
+<div id="pop-settings" class="sidebar-popup popup" style="top:340px;width:280px;max-width:280px">
+  <button class="popup-close" onclick="closeSidebarPopup('settings')">✕</button>
+  <h3>⚙️ Settings</h3>
+  <div class="setting-row">AI Suggestions <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="setting-row">Notifications <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="setting-row">Dark Mode<div class="toggle on" id="darkModeToggle" onclick="toggleDarkMode()"></div></div>
+ <div class="setting-row">Auto-Transcription <div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+  <div class="setting-row">Save Audio Files <div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
+  <div class="setting-row">Email Reminders <div class="toggle" onclick="this.classList.toggle('on')"></div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NOTIFICATION DROPDOWN
+════════════════════════════════════════════════ -->
+<div id="notifDropdown">
+  <div class="notif-dropdown">
+    <div class="nd-title">🔔 Notifications</div>
+    <div class="nd-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+      <div><div>Meeting: Product Sync starting soon</div><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">in 15 minutes</div></div>
+      <span class="nd-time">now</span>
+    </div>
+    <div class="nd-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f472b6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <div><div>Deadline: Action Items overdue</div><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">2 items pending</div></div>
+      <span class="nd-time">2h</span>
+    </div>
+    <div class="nd-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      <div><div>Meeting: Budget Review tomorrow</div><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">Prepare financials</div></div>
+      <span class="nd-time">1d</span>
+    </div>
+    <div class="nd-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>
+      <div><div style="color:#f87171;font-weight:600">URGENT: Finalize investor deck NOW</div><div style="font-size:10px;color:rgba(255,255,255,.3);margin-top:2px">Call at 3 PM today</div></div>
+      <span class="nd-time">!</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     MEET OVERLAY
+════════════════════════════════════════════════ -->
+<div id="meetOverlay">
+  <div class="meet-overlay-box">
+    <div class="meet-header">
+      <div class="meet-header-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.916L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>
+        <span id="meetTitle">Google Meet</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <a id="meetLink" href="https://meet.google.com" target="_blank" style="font-size:12px;color:var(--cyan);text-decoration:none;border:1px solid rgba(0,229,255,.3);padding:5px 12px;border-radius:20px">Open in Google Meet ↗</a>
+        <button class="meet-close-btn" onclick="closeMeetOverlay()">✕ Close</button>
+      </div>
+    </div>
+    <div class="meet-body">
+      <div class="meet-mock">
+        <div style="color:rgba(255,255,255,.4);font-size:13px;margin-bottom:16px" id="meetSubtitle">Connected to Google Meet</div>
+        <div class="meet-avatar-grid">
+          <div class="meet-participant"><div class="p-avatar" style="background:linear-gradient(135deg,#7c3aed,#06b6d4)">AK</div><span>Arjun Kumar</span></div>
+          <div class="meet-participant"><div class="p-avatar" style="background:linear-gradient(135deg,#f472b6,#a855f7)">RS</div><span>Ravi Singh</span></div>
+          <div class="meet-participant"><div class="p-avatar" style="background:linear-gradient(135deg,#06b6d4,#0ea5e9)">PM</div><span>Priya M.</span></div>
+          <div class="meet-participant" style="border-style:dashed"><span style="font-size:20px">+</span><span>Waiting…</span></div>
+        </div>
+        <div class="meet-link-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <span id="meetCode">meet.google.com/abc-defg-hij</span>
+        </div>
+        <div class="meet-controls">
+          <button class="mc-btn gray" title="Mute">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+          </button>
+          <button class="mc-btn gray" title="Camera">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.87v6.26a1 1 0 0 1-1.447.916L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z"/></svg>
+          </button>
+          <button class="mc-btn red" title="End call" onclick="closeMeetOverlay()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.42 19.42 0 0 1-6-6A19.79 19.79 0 0 1 2.12 3.18 2 2 0 0 1 4.11 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91"/><line x1="23" y1="1" x2="1" y2="23"/></svg>
+          </button>
+          <button class="mc-btn gray" title="Screen share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     AUTH MODAL (Login / Signup)
+════════════════════════════════════════════════ -->
+<div id="authOverlay" class="popup-overlay center-overlay">
+  <div class="popup" style="width:360px;max-width:360px">
+    <button class="popup-close" onclick="closeAuthOverlay()">✕</button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
+      <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#06b6d4);display:flex;align-items:center;justify-content:center">
+        <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" width="14" height="14"><circle cx="8" cy="8" r="5"/><path d="M8 5v3l2 2"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:800">AI Meeting-to-Action</div>
+    </div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:4px;background:rgba(255,255,255,.05);border-radius:12px;padding:4px;margin-bottom:20px">
+      <button id="tabLogin" onclick="switchAuthTab('login')" style="flex:1;padding:8px;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);background:linear-gradient(135deg,rgba(124,58,237,.5),rgba(6,182,212,.4));color:#fff;transition:all .2s">Login</button>
+      <button id="tabSignup" onclick="switchAuthTab('signup')" style="flex:1;padding:8px;border-radius:9px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);background:transparent;color:rgba(255,255,255,.4);transition:all .2s">Sign Up</button>
+    </div>
+    <!-- Login -->
+    <form id="loginForm" onsubmit="doLogin(event)" style="display:flex;flex-direction:column;gap:12px">
+      <div id="loginErr" style="display:none;font-size:12px;color:#f87171;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:7px 10px"></div>
+      <div class="auth-field-wrap">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:5px">USERNAME / EMAIL</div>
+        <input id="loginEmail" type="text" placeholder="you@example.com" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      </div>
+      <div class="auth-field-wrap">
+        <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:5px">PASSWORD</div>
+        <input id="loginPass" type="password" placeholder="••••••••" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      </div>
+      <button type="submit" style="padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#00e5ff,#a855f7);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:var(--font)">Login →</button>
+      <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.35)">No account? <a onclick="switchAuthTab('signup')" style="color:var(--cyan);cursor:pointer;font-weight:700">Sign Up</a></div>
+    </form>
+    <!-- Signup -->
+    <form id="signupForm" onsubmit="doSignup(event)" style="display:none;flex-direction:column;gap:11px">
+      <div id="signupErr" style="display:none;font-size:12px;color:#f87171;background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);border-radius:8px;padding:7px 10px"></div>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:-4px">EMAIL</div>
+      <input id="suEmail" type="email" placeholder="you@example.com" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:-4px">MOBILE NUMBER</div>
+      <input id="suMobile" type="tel" placeholder="+91 00000 00000" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:-4px">CREATE PASSWORD</div>
+      <input id="suPass" type="password" placeholder="Min 8 characters" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.4);letter-spacing:.05em;margin-bottom:-4px">CONFIRM PASSWORD</div>
+      <input id="suConfirm" type="password" placeholder="Re-enter password" required style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;font-family:var(--font);outline:none"/>
+      <button type="submit" style="padding:12px;border-radius:12px;border:none;background:linear-gradient(90deg,#a855f7,#e040fb);color:#fff;font-weight:800;font-size:14px;cursor:pointer;font-family:var(--font)">Create Account →</button>
+      <div style="text-align:center;font-size:12px;color:rgba(255,255,255,.35)">Have account? <a onclick="switchAuthTab('login')" style="color:var(--cyan);cursor:pointer;font-weight:700">Login</a></div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ═══════════════ STATE ═══════════════ */
+const state = {
+  user: null,
+  todos: [
+    {id:1,text:'Finalize Q2 investor deck',done:false},
+    {id:2,text:'Send product brief to stakeholders',done:false},
+    {id:3,text:'Review sprint backlog',done:true},
+  ],
+  notes: ['Key decisions from Product Sync meeting.','Budget review prep: compile March financials.'],
+  audios: [],
+  aiMessages: []
+};
+
+/* ═══════════════ WAVEFORM ═══════════════ */
+(function(){
+  const c = document.getElementById('waveCenter');
+  [8,14,22,18,30,24,38,28,42,32,38,26,30,20,26,18,24,28,36,26,22,16,26,18,12,22,30,22,18,10,16,24,20,14,28,22,16,12,20,28].forEach((h,i)=>{
+    const b=document.createElement('div');
+    b.className='wb';
+    b.style.height=h+'px';
+    b.style.animationDelay=(i*0.06)+'s';
+    b.style.animationDuration=(0.7+Math.random()*0.7)+'s';
+    c.appendChild(b);
+  });
+})();
+
+/* ═══════════════ DASHBOARD POPUP ═══════════════ */
+function toggleDashPopup(){
+  const p=document.getElementById('dashPopup');
+  const isOpen=p.classList.contains('open');
+  closeAllPopupsForce();
+  if(!isOpen) {
+    if(state.user){
+      document.getElementById('dashUserInfo').style.display='block';
+      document.getElementById('dashUserName').textContent=state.user.name||state.user.email;
+      document.getElementById('dashUserEmail').textContent=state.user.email;
+    } else {
+      document.getElementById('dashUserInfo').style.display='none';
+    }
+    p.classList.add('open');
+  }
+}
+function closeDashPopup(){ document.getElementById('dashPopup').classList.remove('open'); }
+
+/* ═══════════════ SIDEBAR POPUPS ═══════════════ */
+let activeSidebar=null;
+function openSidebarPopup(name,el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  closeAllPopupsForce();
+  if(name==='todos') renderTodos();
+  if(name==='notes') renderNotes();
+  if(name==='audio') renderAudios();
+  const pop=document.getElementById('pop-'+name);
+  if(pop){ pop.classList.add('open'); activeSidebar=name; }
+}
+function closeSidebarPopup(name){
+  const pop=document.getElementById('pop-'+name);
+  if(pop) pop.classList.remove('open');
+  activeSidebar=null;
+}
+
+/* ═══════════════ NOTIFICATION ═══════════════ */
+function toggleNotif(){
+  const d=document.getElementById('notifDropdown');
+  const isOpen=d.classList.contains('open');
+  closeAllPopupsForce();
+  if(!isOpen) d.classList.add('open');
+}
+
+/* ═══════════════ CLOSE ALL ═══════════════ */
+function closeAllPopupsForce(){
+  document.getElementById('dashPopup').classList.remove('open');
+  document.getElementById('notifDropdown').classList.remove('open');
+  document.querySelectorAll('.sidebar-popup').forEach(p=>p.classList.remove('open'));
+}
+function closeAllPopups(e){
+  // only close if clicking on center area background
+  if(e.target.classList.contains('center')||e.target.classList.contains('dash-label')||e.target.classList.contains('waveform-center')){
+    closeAllPopupsForce();
+  }
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeAllPopupsForce(); closeMeetOverlay(); closeAuthOverlay(); }});
+
+/* ═══════════════ TO-DO ═══════════════ */
+function renderTodos(){
+  const list=document.getElementById('todoList');
+  list.innerHTML='';
+  state.todos.forEach(t=>{
+    const div=document.createElement('div');
+    div.className='todo-item';
+    div.innerHTML=`<input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo(${t.id})"/>
+      <span class="ti-text ${t.done?'done':''}">${t.text}</span>
+      <button onclick="deleteTodo(${t.id})" style="background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:14px;line-height:1">✕</button>`;
+    list.appendChild(div);
+  });
+}
+function addTodo(){
+  const inp=document.getElementById('todoInput');
+  const val=inp.value.trim();
+  if(!val) return;
+  state.todos.push({id:Date.now(),text:val,done:false});
+  inp.value='';
+  renderTodos();
+}
+function toggleTodo(id){ const t=state.todos.find(x=>x.id===id); if(t) t.done=!t.done; renderTodos(); }
+function deleteTodo(id){ state.todos=state.todos.filter(x=>x.id!==id); renderTodos(); }
+
+/* ═══════════════ NOTES ═══════════════ */
+function renderNotes(){
+  const list=document.getElementById('notesList');
+  list.innerHTML='';
+  state.notes.forEach((n,i)=>{
+    const div=document.createElement('div');
+    div.className='note-item';
+    div.innerHTML=`<span style="flex:1">${n}</span>`;
+    list.appendChild(div);
+  });
+}
+function addNote(){
+  const inp=document.getElementById('noteInput');
+  const val=inp.value.trim();
+  if(!val) return;
+  state.notes.unshift(val);
+  inp.value='';
+  renderNotes();
+}
+
+/* ═══════════════ AUDIO ═══════════════ */
+function renderAudios(){
+  const list=document.getElementById('audioList');
+  list.innerHTML='';
+  if(!state.audios.length){
+    list.innerHTML='<div style="font-size:12px;color:rgba(255,255,255,.3);padding:6px 0">No audio files yet. Upload below.</div>';
+    return;
+  }
+  state.audios.forEach(a=>{
+    const div=document.createElement('div');
+    div.className='audio-item';
+    div.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>${a}`;
+    list.appendChild(div);
+  });
+}
+function handleAudioUpload(e){
+  Array.from(e.target.files).forEach(f=>{ if(!state.audios.includes(f.name)) state.audios.push(f.name); });
+  renderAudios();
+}
+
+/* ── Join Meeting ── */
+function openJoinPopup() {
+  document.getElementById('joinLinkInput').value = '';
+  document.getElementById('joinErr').style.display = 'none';
+  document.getElementById('joinPopup').classList.add('open');
+}
+function closeJoinPopup() { document.getElementById('joinPopup').classList.remove('open'); }
+
+function confirmJoin() {
+  let val = document.getElementById('joinLinkInput').value.trim();
+  const err = document.getElementById('joinErr');
+  if (!val) { err.textContent = 'Please enter a meeting link or code.'; err.style.display = 'block'; return; }
+  // auto-prefix bare codes like "abc-defg-hij"
+  if (!val.startsWith('http')) val = 'https://meet.google.com/' + val;
+  err.style.display = 'none';
+  closeJoinPopup();
+  openMeetOverlay('join', val);
+}
+
+/* ── Create Meeting ── */
+let _generatedMeetUrl = '';
+function openCreatePopup() {
+  document.getElementById('createNameInput').value = '';
+  document.getElementById('createErr').style.display = 'none';
+  document.getElementById('generatedCodeWrap').style.display = 'none';
+  document.getElementById('createConfirmBtn').textContent = 'Generate & Open ↗';
+  _generatedMeetUrl = '';
+  document.getElementById('createPopup').classList.add('open');
+}
+function closeCreatePopup() { document.getElementById('createPopup').classList.remove('open'); }
+
+function confirmCreate() {
+  const name = document.getElementById('createNameInput').value.trim();
+  const err  = document.getElementById('createErr');
+  if (!name) { err.textContent = 'Please enter a meeting name.'; err.style.display = 'block'; return; }
+  err.style.display = 'none';
+
+  if (!_generatedMeetUrl) {
+    // Generate a random meet-style code
+    const rand = () => Math.random().toString(36).substring(2, 5);
+    const code = rand() + '-' + rand() + '-' + rand();
+    _generatedMeetUrl = 'https://meet.google.com/' + code;
+    document.getElementById('generatedCode').textContent = _generatedMeetUrl;
+    document.getElementById('generatedCodeWrap').style.display = 'block';
+    document.getElementById('createConfirmBtn').textContent = 'Open Meeting ↗';
+    return; // show code first, let user click again to open
+  }
+
+  // Second click — open the meeting
+  closeCreatePopup();
+  openMeetOverlay('create', _generatedMeetUrl);
+}
+
+function copyMeetCode() {
+  navigator.clipboard.writeText(_generatedMeetUrl).then(() => showToast('Link copied!'));
+}
+
+/* ── Updated openMeetOverlay — REPLACE old one ── */
+function openMeetOverlay(type, url) {
+  const overlay  = document.getElementById('meetOverlay');
+  const titleEl  = document.getElementById('meetTitle');
+  const subEl    = document.getElementById('meetSubtitle');
+  const codeEl   = document.getElementById('meetCode');
+  const linkEl   = document.getElementById('meetLink');
+
+  titleEl.textContent = type === 'join' ? 'Join Meeting – Google Meet' : 'Create Meeting – Google Meet';
+  subEl.textContent   = type === 'join' ? 'Joining session…' : 'Starting new session…';
+  codeEl.textContent  = url;
+  linkEl.href         = url;
+
+  overlay.classList.add('open');
+  setTimeout(() => window.open(url, '_blank'), 300);
+}
+
+/* ── Wire buttons — REPLACE old onclick on both meet buttons ── */
+// Change Join Meeting button: onclick="openJoinPopup()"
+// Change Create Meeting button: onclick="openCreatePopup()"
+// Quick auto-patch if you prefer:
+document.addEventListener('DOMContentLoaded', () => {
+  const btns = document.querySelectorAll('.meet-btn');
+  if (btns[0]) btns[0].setAttribute('onclick', 'openJoinPopup()');
+  if (btns[1]) btns[1].setAttribute('onclick', 'openCreatePopup()');
+});
+
+/* ═══════════════ AUTH ═══════════════ */
+function openAuthModal(tab){ document.getElementById('authOverlay').classList.add('open'); switchAuthTab(tab||'login'); }
+function closeAuthOverlay(){ document.getElementById('authOverlay').classList.remove('open'); }
+document.getElementById('authOverlay').addEventListener('click',function(e){ if(e.target===this) closeAuthOverlay(); });
+
+function switchAuthTab(tab){
+  const isLogin=tab==='login';
+  document.getElementById('loginForm').style.display=isLogin?'flex':'none';
+  document.getElementById('signupForm').style.display=isLogin?'none':'flex';
+  document.getElementById('tabLogin').style.background=isLogin?'linear-gradient(135deg,rgba(124,58,237,.5),rgba(6,182,212,.4))':'transparent';
+  document.getElementById('tabLogin').style.color=isLogin?'#fff':'rgba(255,255,255,.4)';
+  document.getElementById('tabSignup').style.background=!isLogin?'linear-gradient(135deg,rgba(168,85,247,.5),rgba(224,64,251,.4))':'transparent';
+  document.getElementById('tabSignup').style.color=!isLogin?'#fff':'rgba(255,255,255,.4)';
+}
+
+function doLogin(e){
+  e.preventDefault();
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  const err=document.getElementById('loginErr');
+  if(!email||!pass){ err.textContent='Please fill all fields.'; err.style.display='block'; return; }
+  err.style.display='none';
+  state.user={name:email.split('@')[0],email};
+  document.querySelector('.avatar-fallback').textContent=state.user.name.substring(0,2).toUpperCase();
+  closeAuthOverlay();
+  showToast('Welcome back, '+state.user.name+'!');
+}
+
+function doSignup(e){
+  e.preventDefault();
+  const email=document.getElementById('suEmail').value.trim();
+  const mobile=document.getElementById('suMobile').value.trim();
+  const pass=document.getElementById('suPass').value;
+  const confirm=document.getElementById('suConfirm').value;
+  const err=document.getElementById('signupErr');
+  if(!email||!mobile||!pass||!confirm){ err.textContent='Please fill all fields.'; err.style.display='block'; return; }
+  if(pass.length<8){ err.textContent='Password must be at least 8 characters.'; err.style.display='block'; return; }
+  if(pass!==confirm){ err.textContent='Passwords do not match.'; err.style.display='block'; return; }
+  err.style.display='none';
+  state.user={name:email.split('@')[0],email,mobile};
+  document.querySelector('.avatar-fallback').textContent=state.user.name.substring(0,2).toUpperCase();
+  closeAuthOverlay();
+  showToast('Account created! Welcome, '+state.user.name+'!');
+}
+
+function toggleDarkMode() {
+  const toggle = document.getElementById('darkModeToggle');
+  const isDark = !document.body.classList.contains('light');
+  if (isDark) {
+    document.body.classList.add('light');
+    toggle.classList.remove('on');
+  } else {
+    document.body.classList.remove('light');
+    toggle.classList.add('on');
+  }
+}
+
+/* ═══════════════ AI CHAT ═══════════════ */
+const aiReplies=[
+  "I've analyzed your request. Based on your meeting history, I suggest prioritizing action items from the last 3 meetings first.",
+  "Great question! Your task completion rate is 88% this week — above average. Would you like a detailed breakdown?",
+  "I found 4 related notes from previous meetings. Shall I compile them into a summary document?",
+  "Based on your calendar, you have 2 meetings today. I recommend blocking 30 minutes before each for preparation.",
+  "Your team's productivity peaks on Tuesday mornings. Consider scheduling critical meetings then.",
+  "I noticed 3 deadlines approaching this week. Want me to create a priority checklist?",
+  "Analyzing meeting patterns… Teams with weekly standups complete 40% more action items on average.",
+];
+let replyIdx=0;
+
+function sendAI(){
+  const inp=document.getElementById('aiInput');
+  const val=inp.value.trim();
+  if(!val) return;
+  const msgs=document.getElementById('aiMsgs');
+  const userName=state.user?state.user.name:'You';
+
+  // User message
+  const userDiv=document.createElement('div');
+  userDiv.className='ai-msg user-msg';
+  userDiv.innerHTML=`<div class="msg-name">${userName}</div>${val}`;
+  msgs.appendChild(userDiv);
+  inp.value='';
+  msgs.scrollTop=msgs.scrollHeight;
+
+  // Typing indicator
+  const typing=document.createElement('div');
+  typing.className='typing-indicator';
+  typing.innerHTML='<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  msgs.appendChild(typing);
+  msgs.scrollTop=msgs.scrollHeight;
+
+  // AI reply
+  setTimeout(()=>{
+    msgs.removeChild(typing);
+    const aiDiv=document.createElement('div');
+    aiDiv.className='ai-msg';
+    aiDiv.innerHTML=`<div class="msg-name ai-name">✦ AI Assistant</div>${aiReplies[replyIdx%aiReplies.length]}`;
+    msgs.appendChild(aiDiv);
+    replyIdx++;
+    msgs.scrollTop=msgs.scrollHeight;
+  },1200);
+}
+
+/* ═══════════════ TOAST ═══════════════ */
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#00e5ff,#a855f7);color:#fff;font-size:13px;font-weight:700;padding:10px 24px;border-radius:30px;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.5);font-family:var(--font);animation:popIn .3s ease';
+  t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const msgs  = document.getElementById('aiMsgs');
+  if (!msgs) return;
+
+  // Clear any hardcoded starter messages first (optional — remove if you want both)
+  msgs.innerHTML = '';
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Welcome card
+  const welcome = document.createElement('div');
+  welcome.className = 'ai-msg';
+  welcome.style.cssText = 'border-left-color:#00e5ff;background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(168,85,247,0.05));';
+  welcome.innerHTML = `
+    <div class="msg-name ai-name" style="font-size:11px;margin-bottom:5px">✦ AI Assistant</div>
+    <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:6px">
+      ${greeting}! 👋 Welcome to AI Meeting-to-Action.
+    </div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6">
+      I'm your AI copilot. Here's what I can help you with today:
+    </div>
+    <ul style="margin:8px 0 0 4px;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px">
+      <li style="font-size:11px;color:rgba(255,255,255,0.55);display:flex;gap:6px">
+        <span style="color:var(--cyan)">→</span> Summarize meetings &amp; extract action items
+      </li>
+      <li style="font-size:11px;color:rgba(255,255,255,0.55);display:flex;gap:6px">
+        <span style="color:var(--cyan)">→</span> Answer questions about your tasks &amp; deadlines
+      </li>
+      <li style="font-size:11px;color:rgba(255,255,255,0.55);display:flex;gap:6px">
+        <span style="color:var(--cyan)">→</span> Give smart recommendations based on your workflow
+      </li>
+    </ul>
+    <div style="margin-top:10px;font-size:11px;color:rgba(255,255,255,0.35);border-top:1px solid rgba(255,255,255,0.07);padding-top:8px">
+      Type anything below to get started ✨
+    </div>
+  `;
+  msgs.appendChild(welcome);
+
+  // Delayed follow-up nudge (after 3 seconds)
+  setTimeout(() => {
+    const nudge = document.createElement('div');
+    nudge.className = 'ai-msg';
+    nudge.innerHTML = `
+      <div class="msg-name ai-name">✦ AI Assistant</div>
+      You have <strong style="color:var(--cyan)">2 upcoming meetings</strong> today and
+      <strong style="color:#f472b6">3 pending action items</strong> from your last session.
+      Want a quick briefing?
+    `;
+    msgs.appendChild(nudge);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 3000);
+
+});
+
+let _epDpDataUrl = null;   // holds the chosen image data URL
+
+function openEditProfile() {
+  closeDashPopup();   // close dashboard first
+  // pre-fill current values
+  const nameEl  = document.getElementById('epNameInput');
+  const emailEl = document.getElementById('epEmailInput');
+  nameEl.value  = state.user ? (state.user.name  || '') : '';
+  emailEl.value = state.user ? (state.user.email || '') : '';
+  _epDpDataUrl  = state.user ? (state.user.dp || null) : null;
+  refreshEpAvatar();
+  document.getElementById('editProfilePopup').classList.add('open');
+}
+function closeEditProfile() {
+  document.getElementById('editProfilePopup').classList.remove('open');
+  _epDpDataUrl = null;
+}
+
+function handleDpChange(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => { _epDpDataUrl = ev.target.result; refreshEpAvatar(); };
+  reader.readAsDataURL(file);
+}
+
+function refreshEpAvatar() {
+  const img      = document.getElementById('epAvatarImg');
+  const fallback = document.getElementById('epAvatarFallback');
+  if (_epDpDataUrl) {
+    img.src = _epDpDataUrl; img.style.display = 'block';
+    fallback.style.display = 'none';
+  } else {
+    img.style.display = 'none'; fallback.style.display = 'flex';
+    const name = document.getElementById('epNameInput').value.trim();
+    fallback.textContent = name ? name.substring(0,2).toUpperCase() : '?';
+  }
+}
+
+function saveProfile() {
+  const name  = document.getElementById('epNameInput').value.trim();
+  const email = document.getElementById('epEmailInput').value.trim();
+  if (!name)  { showToast('Please enter a display name.'); return; }
+  if (!email) { showToast('Please enter an email.'); return; }
+
+  if (!state.user) state.user = {};
+  state.user.name  = name;
+  state.user.email = email;
+  if (_epDpDataUrl) state.user.dp = _epDpDataUrl;
+
+  // update topbar avatar
+  const fallback = document.querySelector('.avatar-fallback');
+  const avatarImg = document.querySelector('.avatar img');
+
+  if (state.user.dp) {
+    if (!avatarImg) {
+      // create img inside avatar div
+      const img = document.createElement('img');
+      img.src = state.user.dp;
+      document.querySelector('.avatar').innerHTML = '';
+      document.querySelector('.avatar').appendChild(img);
+    } else {
+      avatarImg.src = state.user.dp;
+    }
+  } else {
+    document.querySelector('.avatar').innerHTML =
+      `<div class="avatar-fallback">${name.substring(0,2).toUpperCase()}</div>`;
+  }
+
+  closeEditProfile();
+  showToast('Profile updated!');
+}
+
+// Live initials preview as user types
+document.addEventListener('DOMContentLoaded', () => {
+  const nameInp = document.getElementById('epNameInput');
+  if (nameInp) nameInp.addEventListener('input', () => { if (!_epDpDataUrl) refreshEpAvatar(); });
+});
+</script>
+</body>
+</html>
